@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:email_validator/email_validator.dart';
 
 import 'login.dart';
 
@@ -98,11 +99,36 @@ class RegisterEmpty extends StatelessWidget {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(14))),
                                       onPressed:(){
-                                        checkPossiblePasswordText(passwd.text);
-                                      // 이메일이 입력되었는지 확인(이메일 형태가 맞는지)
+                                        // 중복 검사
+                                        if((email.text.isNotEmpty) && (passwd.text.isNotEmpty) && (passwdck.text.isNotEmpty)) {
+                                          // e-mail
+                                          if(!EmailValidator.validate(email.text)) {
+                                            myDialog(context, "이메일을 다시 입력해주세요.");
+                                            return null;
+                                          }
+                                          // passwd
+                                          CorrectWordParameter w = checkPossiblePasswordText(passwd.text);
+                                          if(!w.isCorrectWord) {
+                                            myDialog(context, "영문자, 숫자, 특수문자 1개씩\n8자 이상 입력해주세요. ");
+                                            return null;
+                                          }
+                                          // passwdck
+                                          if(!(passwd.text == passwdck.text)) {
+                                            myDialog(context, "비밀번호와 다릅니다.");
+                                            return null;
+                                          }
+                                          myDialog(context, "회원가입 완료되었습니다.\n로그인 페이지로 넘어갑니다.");
+                                          Navigator.push(context, MaterialPageRoute(builder: (context) => Scaffold(body: ListView(children: [ LoginEmpty()]))));
+                                        
 
-                                      // 비밀번호가 입력되었는지 확인(유효성 검사)
-                                      // 비밀번호 체크 입력되었는지 확인(비밀번호와 같은지)
+                                        } else{
+                                          myDialog(context, "입력해주세요.");
+                                        }                                        
+                                      // 이메일이 입력되었는지 확인(이메일 형태가 맞는지)
+                                      // 비밀번호가 입력되었는지 확인(유효성 검사)                                      
+                                      // 비밀번호 체크 입력되었는지 확인(비밀번호와 같은지)                                    
+                                      // 충족되면 
+                                      // 아니라면 다시 입력해주세요.
                                       },
                                       child: Text(
                                         '확인',
@@ -293,7 +319,7 @@ class RegisterEmpty extends StatelessWidget {
                                   width: 310,
                                   height: 65.52,
                                   child: TextFormField(
-                                    controller: email,
+                                    controller: email,                                    
                                     style:TextStyle(
                                       color: Color(0xFF141718),
                                       fontSize: 14,
@@ -372,6 +398,31 @@ class RegisterEmpty extends StatelessWidget {
   }
 }
 
+void myDialog(context, String value) {
+  showDialog(
+    context: context,
+    builder: (context) {
+
+      return Dialog(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,          
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(value, style: TextStyle(fontSize: 20),),
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              icon: const Icon(Icons.close),
+            )
+          ],
+        ),
+      );
+    },
+  );
+}
+
+
 class CorrectWordParameter {
   bool is8Characters;
   bool is1Symbol;
@@ -426,7 +477,7 @@ CorrectWordParameter checkPossiblePasswordText(String value) {
   }
   return correctWordParameter;
 }
-
+/*
 /////////// 테스트 코드 ///////////////////////
 void main(List<String> arguments) async {
   var text = 'abcd@122';
@@ -437,4 +488,17 @@ void main(List<String> arguments) async {
   print('speicail vharacters : ${correct.is1Symbol}');
   print('letter : ${correct.is1Letter}');
   print('number : ${correct.is1Number}');
+}*/
+class emailValidate {
+//extension InputValidate on String {
+  //이메일 포맷 검증
+  bool isValidEmailFormat(String value) {
+    return RegExp(
+            r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+        .hasMatch(value);
+  }
+  //대쉬를 포함하는 010 휴대폰 번호 포맷 검증 (010-1234-5678)
+  bool isValidPhoneNumberFormat(String value) {
+    return RegExp(r'^010-?([0-9]{4})-?([0-9]{4})$').hasMatch(value);
+  }
 }
