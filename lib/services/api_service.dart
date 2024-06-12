@@ -4,7 +4,7 @@ import 'package:nunsong/services/map_api.dart';
 
 class ApiService {
   static const baseurl_place =
-      'https://ubunj66fwhu2yktk4tw4noo77e0fvmrb.lambda-url.ap-northeast-2.on.aws/';
+      'https://ubunj66fwhu2yktk4tw4noo77e0fvmrb.lambda-url.ap-northeast-2.on.aws';
 
   static Future<MapModel> fetchDatafromAPI(String pname) async {
     final url = Uri.parse('$baseurl_place/?pname=$pname');
