@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 class population_complexity extends StatelessWidget {
-  const population_complexity({super.key});
+  final String ppltnTime;
+  const population_complexity({super.key, required this.ppltnTime});
 
   @override
   Widget build(BuildContext context) {
@@ -10,7 +11,7 @@ class population_complexity extends StatelessWidget {
       children: [
         SizedBox(
           width: 180,
-          height: 80,
+          height: 100,
           child: Stack(
             children: [
               Positioned(
@@ -18,7 +19,7 @@ class population_complexity extends StatelessWidget {
                 top: 0,
                 child: Container(
                   width: 180,
-                  height: 80,
+                  height: 100,
                   decoration: ShapeDecoration(
                     color: const Color(0xB2FAFBFB),
                     shape: RoundedRectangleBorder(
@@ -37,15 +38,15 @@ class population_complexity extends StatelessWidget {
               ),
               const Positioned(
                 left: 10,
-                top: 6,
+                top: 7,
                 child: SizedBox(
                   width: 89,
                   height: 21.33,
                   child: Text(
-                    '인구 밀집도',
+                    '인구 분포',
                     style: TextStyle(
                       color: Color(0xFF111827),
-                      fontSize: 10,
+                      fontSize: 11,
                       fontFamily: 'Pretendard',
                       fontWeight: FontWeight.w600,
                       height: 0,
@@ -55,7 +56,7 @@ class population_complexity extends StatelessWidget {
               ),
               Positioned(
                 left: 10,
-                top: 28,
+                top: 32.5,
                 child: Container(
                   width: 40,
                   height: 40,
@@ -69,7 +70,7 @@ class population_complexity extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 9,
+                            fontSize: 10,
                             fontFamily: 'Pretendard',
                             fontWeight: FontWeight.w600,
                             height: 0,
@@ -82,7 +83,7 @@ class population_complexity extends StatelessWidget {
               ),
               Positioned(
                 left: 50,
-                top: 28,
+                top: 32.5,
                 child: Container(
                   width: 40,
                   height: 40,
@@ -109,7 +110,7 @@ class population_complexity extends StatelessWidget {
               ),
               Positioned(
                 left: 90,
-                top: 28,
+                top: 32.5,
                 child: Container(
                   width: 40,
                   height: 40,
@@ -136,7 +137,7 @@ class population_complexity extends StatelessWidget {
               ),
               Positioned(
                 left: 130,
-                top: 28,
+                top: 32.5,
                 child: Container(
                   width: 40,
                   height: 40,
@@ -158,6 +159,19 @@ class population_complexity extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 10,
+                bottom: 7,
+                child: Text(
+                  '$ppltnTime 기준',
+                  style: const TextStyle(
+                    color: Color(0xFF111827),
+                    fontSize: 10,
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
