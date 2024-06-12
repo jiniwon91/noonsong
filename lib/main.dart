@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:nunsong/screens/home_screen.dart';
-//import 'package:toonflix/services/api_service.dart';
 import 'dart:io';
 
 class MyHttpOverrides extends HttpOverrides {
@@ -34,7 +33,7 @@ class myApp extends StatelessWidget {
         ),
         cardColor: const Color(0xFFFAFBFB),
       ),
-      home: HomeScreen(),
+      home: const HomeScreen(),
     );
   }
 }
