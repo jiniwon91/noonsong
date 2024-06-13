@@ -189,13 +189,6 @@ class _EnlargedMapScreenState extends State<EnlargedMapScreen> {
             infoWindow: InfoWindow(
               title: cafe.name,
               snippet: '평점: ${cafe.rating}',
-              onTap: () async {
-                if (await canLaunchUrl(Uri.parse(cafe.google_maps_link))) {
-                  await launchUrl(Uri.parse(cafe.google_maps_link));
-                } else {
-                  throw 'Could not launch ${cafe.google_maps_link}';
-                }
-              },
             ),
             onTap: () {
               _mapController
@@ -331,7 +324,7 @@ class _EnlargedMapScreenState extends State<EnlargedMapScreen> {
                                 foregroundColor: Colors.white,
                               ),
                               child: SizedBox(
-                                width: 70, // 텍스트의 최대 너비 지정
+                                width: 75, // 텍스트의 최대 너비 지정
                                 child: Text(
                                   widget.pname,
                                   style: const TextStyle(
