@@ -330,12 +330,19 @@ class _EnlargedMapScreenState extends State<EnlargedMapScreen> {
                                 backgroundColor: buttoncolor,
                                 foregroundColor: Colors.white,
                               ),
-                              child: Text(
-                                widget.pname,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontFamily: 'Pretendard',
-                                  fontWeight: FontWeight.w500,
+                              child: SizedBox(
+                                width: 70, // 텍스트의 최대 너비 지정
+                                child: Text(
+                                  widget.pname,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontFamily: 'Pretendard',
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  softWrap: true, // 줄바꿈 설정
+                                  overflow: TextOverflow
+                                      .visible, // 오버플로우되는 부분은 줄임표로 표시
                                 ),
                               ),
                             ),
