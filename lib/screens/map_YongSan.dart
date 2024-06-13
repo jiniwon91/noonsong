@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:nunsong/widgets/population_complexity.dart';
+import 'package:nunsong/widgets/weather_widget.dart';
 import 'package:nunsong/services/api_service.dart';
 import 'package:nunsong/services/map_api.dart';
 
@@ -83,7 +84,7 @@ class _Map_YongSanState extends State<Map_YongSan> {
           break;
         case 2:
           cameraUpdate = NCameraUpdate.withParams(
-            target: const NLatLng(37.5344018722304, 126.973359125512),
+            target: const NLatLng(37.5344158722304, 126.972759125512),
             zoom: 16.5,
           );
           break;
@@ -209,6 +210,8 @@ class _ButtonLayerState extends State<ButtonLayer> {
           future: widget.yongsanStationData,
           builder: (context, snapshot) {
             final ppltnTime = snapshot.hasData ? snapshot.data!.PPLTN_TIME : '';
+            final temp = snapshot.hasData ? snapshot.data!.TEMP : 0.0;
+            final skystts = snapshot.hasData ? snapshot.data!.SKY_STTS : '';
             final buttoncolor = snapshot.hasData
                 ? _getButtonColor(snapshot.data!.CONGEST_LVL)
                 : Colors.grey;
@@ -218,6 +221,11 @@ class _ButtonLayerState extends State<ButtonLayer> {
                   left: 10,
                   bottom: 10,
                   child: population_complexity(ppltnTime: ppltnTime),
+                ),
+                Positioned(
+                  left: 10,
+                  top: 60,
+                  child: WeatherWidget(TEMP: temp, SKY_STTS: skystts),
                 ),
                 Positioned(
                   top: _visibleButtonIndex == 0 ? (screenHeight - 56) / 2 : 410,
