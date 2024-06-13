@@ -34,6 +34,8 @@ dependencies:
   flutter_naver_map: 1.2.2+flutter3.22
   google_maps_flutter: ^2.7.0
   google_maps_flutter_web: ^0.5.8
+  url_launcher: ^6.0.3
+  custom_info_window: ^1.0.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
