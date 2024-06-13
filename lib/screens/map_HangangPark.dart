@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:nunsong/widgets/population_complexity.dart';
@@ -100,15 +103,24 @@ class _Map_HangangParkState extends State<Map_HangangPark> {
               )
             : Stack(
                 children: [
-                  GoogleMap(
-                    mapType: MapType.normal,
-                    initialCameraPosition: CameraPosition(
-                      target: _initialCameraPosition,
-                      zoom: 14,
+                  AbsorbPointer(
+                    absorbing: true,
+                    child: GoogleMap(
+                      mapType: MapType.normal,
+                      initialCameraPosition: CameraPosition(
+                        target: _initialCameraPosition,
+                        zoom: 14,
+                      ),
+                      onMapCreated: (GoogleMapController controller) {
+                        _controller.complete(controller);
+                      },
+                      gestureRecognizers: <Factory<
+                          OneSequenceGestureRecognizer>>{
+                        Factory<OneSequenceGestureRecognizer>(
+                          () => EagerGestureRecognizer(),
+                        ),
+                      },
                     ),
-                    onMapCreated: (GoogleMapController controller) {
-                      _controller.complete(controller);
-                    },
                   ),
                   ButtonLayer(
                     onButtonPressed: _handleButtonPressed,

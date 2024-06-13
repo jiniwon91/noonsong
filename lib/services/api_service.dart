@@ -21,7 +21,6 @@ class ApiService {
           const Utf8Decoder().convert(response.bodyBytes);
       final Map<String, dynamic> mapinfo = jsonDecode(responseBody);
       mapinfo['location'] = pname;
-      print(mapinfo);
       return MapModel.fromJson(mapinfo);
     } else {
       throw Exception('Failed to load map data');
