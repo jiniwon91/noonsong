@@ -87,7 +87,7 @@ class population_complexity extends StatelessWidget {
                 child: Container(
                   width: 40,
                   height: 40,
-                  color: const Color(0xffFFD600),
+                  color: const Color(0xffFFAE00),
                   child: const Stack(
                     children: [
                       Align(
@@ -114,7 +114,7 @@ class population_complexity extends StatelessWidget {
                 child: Container(
                   width: 40,
                   height: 40,
-                  color: const Color(0xffFF8901),
+                  color: const Color(0xFFFF5E01),
                   child: const Stack(
                     children: [
                       Align(

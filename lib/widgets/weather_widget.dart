@@ -21,11 +21,11 @@ class WeatherWidget extends StatelessWidget {
           return isDaytime
               ? 'https://nunsong.s3.ap-northeast-2.amazonaws.com/frontend/weather/sunny_day.png'
               : 'https://nunsong.s3.ap-northeast-2.amazonaws.com/frontend/weather/sunny_night.png';
-        case '구름 조금':
+        case '구름조금':
           return isDaytime
               ? 'https://nunsong.s3.ap-northeast-2.amazonaws.com/frontend/weather/cloudness_less_day.png'
               : 'https://nunsong.s3.ap-northeast-2.amazonaws.com/frontend/weather/cloudness_less_night.png';
-        case '구름 많음':
+        case '구름많음':
           return isDaytime
               ? 'https://nunsong.s3.ap-northeast-2.amazonaws.com/frontend/weather/cloudness_more_day.png'
               : 'https://nunsong.s3.ap-northeast-2.amazonaws.com/frontend/weather/cloudness_more_night.png';

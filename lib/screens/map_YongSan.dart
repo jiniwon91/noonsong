@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:flutter_naver_map/flutter_naver_map.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:nunsong/widgets/population_complexity.dart';
 import 'package:nunsong/widgets/weather_widget.dart';
 import 'package:nunsong/services/api_service.dart';
 import 'package:nunsong/services/map_api.dart';
+import 'package:nunsong/screens/enlarged_map_YongSan.dart';
 
 class Map_YongSan extends StatefulWidget {
   const Map_YongSan({super.key});
@@ -15,14 +15,14 @@ class Map_YongSan extends StatefulWidget {
 }
 
 class _Map_YongSanState extends State<Map_YongSan> {
-  NaverMapController? _mapController;
-  final NLatLng _initialCameraPosition =
-      const NLatLng(37.5300090111487, 126.969510593878);
+  final LatLng _initialCameraPosition =
+      const LatLng(37.5300090111487, 126.969510593878);
   Future<MapModel>? _yongsanStationData;
   Future<MapModel>? _yongStreetData;
   Future<MapModel>? _samgakjiStationData;
   late Timer _timer;
   bool _isLoading = true;
+  final Completer<GoogleMapController> _controller = Completer();
 
   @override
   void initState() {
@@ -59,46 +59,43 @@ class _Map_YongSanState extends State<Map_YongSan> {
     });
   }
 
-  Future<void> initialize() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    await NaverMapSdk.instance.initialize(
-        clientId: 'dnaa6kdl4e',
-        onAuthFailed: (e) => log("네이버맵 인증오류 : $e", name: "onAuthFailed"));
-  }
-
   void _handleButtonPressed(int index) {
-    if (_mapController != null) {
-      NCameraUpdate cameraUpdate;
-      switch (index) {
-        case 0:
-          cameraUpdate = NCameraUpdate.withParams(
-            target: const NLatLng(37.5297718014452, 126.964741503485),
-            zoom: 16.5,
-          );
-          break;
-        case 1:
-          cameraUpdate = NCameraUpdate.withParams(
-            target: const NLatLng(37.5310724832954, 126.971391734373),
-            zoom: 16.5,
-          );
-          break;
-        case 2:
-          cameraUpdate = NCameraUpdate.withParams(
-            target: const NLatLng(37.5344158722304, 126.972759125512),
-            zoom: 16.5,
-          );
-          break;
-        default:
-          cameraUpdate = NCameraUpdate.withParams(
-            target: _initialCameraPosition,
-            zoom: 14,
-          );
-      }
-      cameraUpdate.setAnimation(
-          animation: NCameraAnimation.fly,
-          duration: const Duration(seconds: 1));
-      _mapController!.updateCamera(cameraUpdate);
+    LatLng position;
+    double zoom;
+    String pname;
+
+    switch (index) {
+      case 0:
+        position = const LatLng(37.5297718014452, 126.964741503485);
+        zoom = 16.3;
+        pname = '용산역';
+        break;
+      case 1:
+        position = const LatLng(37.5310724832954, 126.971391734373);
+        zoom = 16.3;
+        pname = '용리단길';
+        break;
+      case 2:
+        position = const LatLng(37.5344158722304, 126.972659125512);
+        zoom = 16.3;
+        pname = '삼각지역';
+        break;
+      default:
+        position = _initialCameraPosition;
+        zoom = 14;
+        pname = '';
     }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EnlargedMapScreen(
+          initialPosition: position,
+          zoom: zoom,
+          pname: pname,
+        ),
+      ),
+    );
   }
 
   @override
@@ -109,49 +106,32 @@ class _Map_YongSanState extends State<Map_YongSan> {
             ? const Center(
                 child: CircularProgressIndicator(),
               )
-            : FutureBuilder(
-                future: initialize(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    return Stack(
-                      children: [
-                        NaverMap(
-                          options: NaverMapViewOptions(
-                            indoorEnable: false,
-                            locationButtonEnable: false,
-                            consumeSymbolTapEvents: true,
-                            initialCameraPosition: NCameraPosition(
-                                target: _initialCameraPosition, zoom: 14),
-                          ),
-                          onMapReady: (controller) {
-                            log("onMapReady", name: "onMapReady");
-                            _mapController = controller;
-                          },
-                        ),
-                        ButtonLayer(
-                          onButtonPressed: _handleButtonPressed,
-                          yongsanStationData: _yongsanStationData,
-                          yongStreetData: _yongStreetData,
-                          samgakjiStationData: _samgakjiStationData,
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  }
-                },
+            : Stack(
+                children: [
+                  GoogleMap(
+                    mapType: MapType.normal,
+                    initialCameraPosition: CameraPosition(
+                      target: _initialCameraPosition,
+                      zoom: 14,
+                    ),
+                    onMapCreated: (GoogleMapController controller) {
+                      _controller.complete(controller);
+                    },
+                  ),
+                  ButtonLayer(
+                    onButtonPressed: _handleButtonPressed,
+                    yongsanStationData: _yongsanStationData,
+                    yongStreetData: _yongStreetData,
+                    samgakjiStationData: _samgakjiStationData,
+                  ),
+                ],
               ),
       ),
     );
   }
 }
 
-class ButtonLayer extends StatefulWidget {
+class ButtonLayer extends StatelessWidget {
   final Function(int) onButtonPressed;
   final Future<MapModel>? yongsanStationData;
   final Future<MapModel>? yongStreetData;
@@ -164,25 +144,6 @@ class ButtonLayer extends StatefulWidget {
     required this.yongStreetData,
     required this.samgakjiStationData,
   });
-
-  @override
-  _ButtonLayerState createState() => _ButtonLayerState();
-}
-
-class _ButtonLayerState extends State<ButtonLayer> {
-  int _visibleButtonIndex = -1;
-
-  void _toggleButton(int index) {
-    setState(() {
-      if (_visibleButtonIndex == index) {
-        _visibleButtonIndex = -1;
-        widget.onButtonPressed(-1);
-      } else {
-        _visibleButtonIndex = index;
-        widget.onButtonPressed(index);
-      }
-    });
-  }
 
   Color _getButtonColor(String congestLevel) {
     switch (congestLevel) {
@@ -201,13 +162,10 @@ class _ButtonLayerState extends State<ButtonLayer> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Stack(
       children: [
         FutureBuilder<MapModel>(
-          future: widget.yongsanStationData,
+          future: yongsanStationData,
           builder: (context, snapshot) {
             final ppltnTime = snapshot.hasData ? snapshot.data!.PPLTN_TIME : '';
             final temp = snapshot.hasData ? snapshot.data!.TEMP : 0.0;
@@ -228,29 +186,22 @@ class _ButtonLayerState extends State<ButtonLayer> {
                   child: WeatherWidget(TEMP: temp, SKY_STTS: skystts),
                 ),
                 Positioned(
-                  top: _visibleButtonIndex == 0 ? (screenHeight - 56) / 2 : 410,
-                  left: _visibleButtonIndex == 0 ? (screenWidth - 56) / 2 : 41,
-                  child: AnimatedOpacity(
-                    opacity:
-                        _visibleButtonIndex == 0 || _visibleButtonIndex == -1
-                            ? 1.0
-                            : 0.0,
-                    duration: const Duration(milliseconds: 200),
-                    child: ElevatedButton(
-                      onPressed: () => _toggleButton(0),
-                      style: ElevatedButton.styleFrom(
-                        shape: const CircleBorder(),
-                        padding: const EdgeInsets.all(28),
-                        backgroundColor: buttoncolor,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text(
-                        '용산역',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w500,
-                        ),
+                  top: 410,
+                  left: 41,
+                  child: ElevatedButton(
+                    onPressed: () => onButtonPressed(0),
+                    style: ElevatedButton.styleFrom(
+                      shape: const CircleBorder(),
+                      padding: const EdgeInsets.all(28),
+                      backgroundColor: buttoncolor,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text(
+                      '용산역',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -260,34 +211,28 @@ class _ButtonLayerState extends State<ButtonLayer> {
           },
         ),
         FutureBuilder<MapModel>(
-          future: widget.yongStreetData,
+          future: yongStreetData,
           builder: (context, snapshot) {
             final buttoncolor = snapshot.hasData
                 ? _getButtonColor(snapshot.data!.CONGEST_LVL)
                 : Colors.grey;
             return Positioned(
-              top: _visibleButtonIndex == 1 ? (screenHeight - 56) / 2 : 355,
-              left: _visibleButtonIndex == 1 ? (screenWidth - 56) / 2 : 190,
-              child: AnimatedOpacity(
-                opacity: _visibleButtonIndex == 1 || _visibleButtonIndex == -1
-                    ? 1.0
-                    : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: ElevatedButton(
-                  onPressed: () => _toggleButton(1),
-                  style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                    padding: const EdgeInsets.all(28),
-                    backgroundColor: buttoncolor,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text(
-                    '용리단길',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w500,
-                    ),
+              top: 355,
+              left: 190,
+              child: ElevatedButton(
+                onPressed: () => onButtonPressed(1),
+                style: ElevatedButton.styleFrom(
+                  shape: const CircleBorder(),
+                  padding: const EdgeInsets.all(28),
+                  backgroundColor: buttoncolor,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text(
+                  '용리단길',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -295,34 +240,28 @@ class _ButtonLayerState extends State<ButtonLayer> {
           },
         ),
         FutureBuilder<MapModel>(
-          future: widget.samgakjiStationData,
+          future: samgakjiStationData,
           builder: (context, snapshot) {
             final buttoncolor = snapshot.hasData
                 ? _getButtonColor(snapshot.data!.CONGEST_LVL)
                 : Colors.grey;
             return Positioned(
-              top: _visibleButtonIndex == 2 ? (screenHeight - 56) / 2 : 245,
-              left: _visibleButtonIndex == 2 ? (screenWidth - 56) / 2 : 247,
-              child: AnimatedOpacity(
-                opacity: _visibleButtonIndex == 2 || _visibleButtonIndex == -1
-                    ? 1.0
-                    : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: ElevatedButton(
-                  onPressed: () => _toggleButton(2),
-                  style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                    padding: const EdgeInsets.all(28),
-                    backgroundColor: buttoncolor,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text(
-                    '삼각지역',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w500,
-                    ),
+              top: 245,
+              left: 247,
+              child: ElevatedButton(
+                onPressed: () => onButtonPressed(2),
+                style: ElevatedButton.styleFrom(
+                  shape: const CircleBorder(),
+                  padding: const EdgeInsets.all(28),
+                  backgroundColor: buttoncolor,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text(
+                  '삼각지역',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
