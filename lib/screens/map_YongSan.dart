@@ -67,17 +67,17 @@ class _Map_YongSanState extends State<Map_YongSan> {
     switch (index) {
       case 0:
         position = const LatLng(37.5297718014452, 126.964741503485);
-        zoom = 16.3;
+        zoom = 18;
         pname = '용산역';
         break;
       case 1:
         position = const LatLng(37.5310724832954, 126.971391734373);
-        zoom = 16.3;
+        zoom = 18;
         pname = '용리단길';
         break;
       case 2:
         position = const LatLng(37.5344158722304, 126.972659125512);
-        zoom = 16.3;
+        zoom = 18;
         pname = '삼각지역';
         break;
       default:

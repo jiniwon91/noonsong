@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:ui' as ui;
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:nunsong/widgets/population_complexity.dart';
 import 'package:nunsong/widgets/weather_widget.dart';
@@ -29,6 +32,9 @@ class _EnlargedMapScreenState extends State<EnlargedMapScreen> {
   GoogleMapController? _mapController;
   final Set<Marker> _markers = {};
   bool _isRestaurantButtonPressed = false;
+  bool _isCafeButtonPressed = false;
+  bool _isStoreButtonPressed = false;
+  LatLng? _currentCameraPosition;
 
   @override
   void initState() {
@@ -60,6 +66,57 @@ class _EnlargedMapScreenState extends State<EnlargedMapScreen> {
     });
   }
 
+  void _onCameraMove(CameraPosition position) {
+    setState(() {
+      _currentCameraPosition = position.target;
+    });
+  }
+
+  Future<BitmapDescriptor> _getRestaurantMarkerIcon() async {
+    final ByteData data = await NetworkAssetBundle(Uri.parse(
+            'https://nunsong.s3.ap-northeast-2.amazonaws.com/frontend/marker/restaurant_marker_mid.png'))
+        .load('');
+    final ui.Codec codec =
+        await ui.instantiateImageCodec(data.buffer.asUint8List());
+    final ui.FrameInfo frameInfo = await codec.getNextFrame();
+    final ByteData? byteData = await frameInfo.image.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+
+    final Uint8List bytes = byteData!.buffer.asUint8List();
+    return BitmapDescriptor.fromBytes(bytes);
+  }
+
+  Future<BitmapDescriptor> _getCafeMarkerIcon() async {
+    final ByteData data = await NetworkAssetBundle(Uri.parse(
+            'https://nunsong.s3.ap-northeast-2.amazonaws.com/frontend/marker/cafe_marker_mid.png'))
+        .load('');
+    final ui.Codec codec =
+        await ui.instantiateImageCodec(data.buffer.asUint8List());
+    final ui.FrameInfo frameInfo = await codec.getNextFrame();
+    final ByteData? byteData = await frameInfo.image.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+
+    final Uint8List bytes = byteData!.buffer.asUint8List();
+    return BitmapDescriptor.fromBytes(bytes);
+  }
+
+  Future<BitmapDescriptor> _getStoreMarkerIcon() async {
+    final ByteData data = await NetworkAssetBundle(Uri.parse(
+            'https://nunsong.s3.ap-northeast-2.amazonaws.com/frontend/marker/store_marker_mid.png'))
+        .load('');
+    final ui.Codec codec =
+        await ui.instantiateImageCodec(data.buffer.asUint8List());
+    final ui.FrameInfo frameInfo = await codec.getNextFrame();
+    final ByteData? byteData = await frameInfo.image.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+
+    final Uint8List bytes = byteData!.buffer.asUint8List();
+    return BitmapDescriptor.fromBytes(bytes);
+  }
+
   void _toggleRestaurantMarkers() async {
     if (_isRestaurantButtonPressed) {
       setState(() {
@@ -68,30 +125,137 @@ class _EnlargedMapScreenState extends State<EnlargedMapScreen> {
         _isRestaurantButtonPressed = false;
       });
     } else {
-      final restaurants = await ApiService.getRestaurant(
-        widget.initialPosition.latitude.toString(),
-        widget.initialPosition.longitude.toString(),
-      );
-
-      final restaurantMarkers = restaurants.map((restaurant) {
-        return Marker(
-          markerId: MarkerId('restaurant_${restaurant.name}'),
-          position: LatLng(restaurant.latitude, restaurant.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-          infoWindow: InfoWindow(
-            title: restaurant.name,
-          ),
-          onTap: () {
-            _mapController?.showMarkerInfoWindow(
-                MarkerId('restaurant_${restaurant.name}'));
-          },
+      if (_currentCameraPosition != null) {
+        final restaurants = await ApiService.getRestaurant(
+          _currentCameraPosition!.latitude.toString(),
+          _currentCameraPosition!.longitude.toString(),
         );
-      }).toSet();
 
+        final restaurantMarkerIcon = await _getRestaurantMarkerIcon();
+
+        final restaurantMarkers = restaurants.map((restaurant) {
+          return Marker(
+            markerId: MarkerId('restaurant_${restaurant.name}'),
+            position: LatLng(restaurant.latitude, restaurant.longitude),
+            icon: restaurantMarkerIcon,
+            infoWindow: InfoWindow(
+              title: restaurant.name,
+              snippet: '평점: ${restaurant.rating}',
+              onTap: () async {
+                if (await canLaunchUrl(
+                    Uri.parse(restaurant.google_maps_link))) {
+                  await launchUrl(Uri.parse(restaurant.google_maps_link));
+                } else {
+                  throw 'Could not launch ${restaurant.google_maps_link}';
+                }
+              },
+            ),
+            onTap: () {
+              _mapController?.showMarkerInfoWindow(
+                  MarkerId('restaurant_${restaurant.name}'));
+            },
+          );
+        }).toSet();
+
+        setState(() {
+          _markers.addAll(restaurantMarkers);
+          _isRestaurantButtonPressed = true;
+        });
+      }
+    }
+  }
+
+  void _toggleCafeMarkers() async {
+    if (_isCafeButtonPressed) {
       setState(() {
-        _markers.addAll(restaurantMarkers);
-        _isRestaurantButtonPressed = true;
+        _markers
+            .removeWhere((marker) => marker.markerId.value.startsWith('cafe_'));
+        _isCafeButtonPressed = false;
       });
+    } else {
+      if (_currentCameraPosition != null) {
+        final cafes = await ApiService.getCafe(
+          _currentCameraPosition!.latitude.toString(),
+          _currentCameraPosition!.longitude.toString(),
+        );
+
+        final cafeMarkerIcon = await _getCafeMarkerIcon();
+
+        final cafeMarkers = cafes.map((cafe) {
+          return Marker(
+            markerId: MarkerId('cafe_${cafe.name}'),
+            position: LatLng(cafe.latitude, cafe.longitude),
+            icon: cafeMarkerIcon,
+            infoWindow: InfoWindow(
+              title: cafe.name,
+              snippet: '평점: ${cafe.rating}',
+              onTap: () async {
+                if (await canLaunchUrl(Uri.parse(cafe.google_maps_link))) {
+                  await launchUrl(Uri.parse(cafe.google_maps_link));
+                } else {
+                  throw 'Could not launch ${cafe.google_maps_link}';
+                }
+              },
+            ),
+            onTap: () {
+              _mapController
+                  ?.showMarkerInfoWindow(MarkerId('cafe_${cafe.name}'));
+            },
+          );
+        }).toSet();
+
+        setState(() {
+          _markers.addAll(cafeMarkers);
+          _isCafeButtonPressed = true;
+        });
+      }
+    }
+  }
+
+  void _toggleStoreMarkers() async {
+    if (_isStoreButtonPressed) {
+      setState(() {
+        _markers.removeWhere(
+            (marker) => marker.markerId.value.startsWith('store_'));
+        _isStoreButtonPressed = false;
+      });
+    } else {
+      if (_currentCameraPosition != null) {
+        final stores = await ApiService.getStore(
+          _currentCameraPosition!.latitude.toString(),
+          _currentCameraPosition!.longitude.toString(),
+        );
+
+        final storeMarkerIcon = await _getStoreMarkerIcon();
+
+        final storeMarkers = stores.map((store) {
+          return Marker(
+            markerId: MarkerId('store_${store.name}'),
+            position: LatLng(store.latitude, store.longitude),
+            icon: storeMarkerIcon,
+            infoWindow: InfoWindow(
+              title: store.name,
+              snippet: '평점: ${store.rating}',
+              onTap: () async {
+                if (await canLaunchUrl(Uri.parse(store.google_maps_link))) {
+                  await launchUrl(Uri.parse(store.google_maps_link));
+                } else {
+                  throw 'Could not launch ${store.google_maps_link}';
+                }
+              },
+            ),
+            onTap: () {
+              _mapController
+                  ?.showMarkerInfoWindow(MarkerId('store_${store.name}'));
+            },
+          );
+        }).toSet();
+
+        setState(() {
+          _markers.addAll(storeMarkers);
+          _isStoreButtonPressed = true;
+        });
+      }
     }
   }
 
@@ -129,6 +293,7 @@ class _EnlargedMapScreenState extends State<EnlargedMapScreen> {
                   onMapCreated: (GoogleMapController controller) {
                     _mapController = controller;
                   },
+                  onCameraMove: _onCameraMove,
                 ),
                 FutureBuilder<MapModel>(
                   future: _mapData,
@@ -153,8 +318,8 @@ class _EnlargedMapScreenState extends State<EnlargedMapScreen> {
                             child: WeatherWidget(TEMP: temp, SKY_STTS: skystts),
                           ),
                           Positioned(
-                            top: MediaQuery.of(context).size.height / 2 - 28,
-                            left: MediaQuery.of(context).size.width / 2 - 28,
+                            bottom: 20,
+                            right: 50,
                             child: ElevatedButton(
                               onPressed: () {
                                 Navigator.pop(context);
@@ -210,6 +375,76 @@ class _EnlargedMapScreenState extends State<EnlargedMapScreen> {
                               ),
                             ),
                           ),
+                          Positioned(
+                            right: 10,
+                            top: 110,
+                            child: ElevatedButton(
+                              onPressed: _toggleCafeMarkers,
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 5),
+                                backgroundColor: _isCafeButtonPressed
+                                    ? Colors.blue
+                                    : Colors.white,
+                                foregroundColor: _isCafeButtonPressed
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.local_cafe, size: 20),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    '카페',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontFamily: 'Pretendard',
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 10,
+                            top: 160,
+                            child: ElevatedButton(
+                              onPressed: _toggleStoreMarkers,
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 5),
+                                backgroundColor: _isStoreButtonPressed
+                                    ? Colors.blue
+                                    : Colors.white,
+                                foregroundColor: _isStoreButtonPressed
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.store, size: 20),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    '편의점',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontFamily: 'Pretendard',
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       );
                     } else if (snapshot.hasError) {
@@ -217,8 +452,6 @@ class _EnlargedMapScreenState extends State<EnlargedMapScreen> {
                         child: Text('Error: ${snapshot.error}'),
                       );
                     }
-
-                    // 데이터 로딩 중인 경우 빈 컨테이너 반환
                     return Container();
                   },
                 ),
